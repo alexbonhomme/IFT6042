@@ -1,0 +1,2 @@
+/usr/bin/ar cr libmtsconverter_lib.a  CMakeFiles/mtsconverter_lib.dir/collada.cpp.o CMakeFiles/mtsconverter_lib.dir/converter.cpp.o CMakeFiles/mtsconverter_lib.dir/obj.cpp.o
+/usr/bin/ranlib libmtsconverter_lib.a
