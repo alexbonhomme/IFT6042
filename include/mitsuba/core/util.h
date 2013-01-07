@@ -340,7 +340,7 @@ extern MTS_EXPORT_CORE bool solveQuadratic(Float a, Float b,
 extern MTS_EXPORT_CORE bool solveQuadraticDouble(double a, double b,
 	double c, double &x0, double &x1);
 
-//// Convert radians to degrees
+/// Convert radians to degrees
 inline Float radToDeg(Float value) { return value * (180.0f / M_PI); }
 
 /// Convert degrees to radians

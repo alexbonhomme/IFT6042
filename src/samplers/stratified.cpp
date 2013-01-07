@@ -76,7 +76,7 @@ public:
 		/* Dimension, up to which which stratified samples are guaranteed to be available. */
 		m_maxDimension = props.getInteger("dimension", 4);
 
-        //m_sampleCount = m_resolution*m_resolution;
+        m_sampleCount = m_resolution*m_resolution;
 		m_permutations1D = new uint32_t*[m_maxDimension];
 		m_permutations2D = new uint32_t*[m_maxDimension];
 

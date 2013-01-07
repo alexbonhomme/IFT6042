@@ -715,7 +715,7 @@ namespace {
 	inline Float fresnelDiffuseIntegrand(Float eta, Float xi) {
 		return fresnelDielectricExt(std::sqrt(xi), eta);
 	}
-};
+}
 
 Float fresnelDiffuseReflectance(Float eta, bool fast) {
 	if (fast) {
