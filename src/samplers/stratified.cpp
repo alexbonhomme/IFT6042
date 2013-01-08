@@ -77,7 +77,7 @@ public:
 		m_maxDimension = props.getInteger("dimension", 4);
 
         m_sampleCount = m_resolution*m_resolution;
-		m_permutations1D = new uint32_t*[m_maxDimension];
+        m_permutations1D = new uint32_t*[m_maxDimension];
 		m_permutations2D = new uint32_t*[m_maxDimension];
 
 		for (int i=0; i<m_maxDimension; i++) {
@@ -156,7 +156,7 @@ public:
 		}
 
 		for (size_t i=0; i<m_req1D.size(); i++)
-			latinHypercube(m_random, m_sampleArrays1D[i], m_req1D[i] * m_sampleCount, 1);
+            latinHypercube(m_random, m_sampleArrays1D[i], m_req1D[i] * m_sampleCount, 1);
 		for (size_t i=0; i<m_req2D.size(); i++)
 			latinHypercube(m_random, reinterpret_cast<Float *>(m_sampleArrays2D[i]),
 				m_req2D[i] * m_sampleCount, 2);
@@ -194,7 +194,7 @@ public:
 			int k = m_permutations2D[m_dimension2D++][m_sampleIndex];
 			int x = k % m_resolution;
 			int y = k / m_resolution;
-			return Point2(
+            return Point2(
 				(x + m_random->nextFloat()) * m_invResolution,
 				(y + m_random->nextFloat()) * m_invResolution
 			);

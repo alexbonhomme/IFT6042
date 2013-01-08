@@ -21,6 +21,8 @@
 MTS_NAMESPACE_BEGIN
 
 //#define RANDOM_NEXT_SAMPLE
+#define TRY_LIMIT 100
+#define FACTOR 0.75
 
 /*!\plugin{poisson}{Poisson Disc sampler}
  *
@@ -30,7 +32,7 @@ public:
     PoissonDiscSampler() : Sampler(Properties()) { }
 
     PoissonDiscSampler(const Properties &props) : Sampler(props) {
-#if 1
+#if 0
         size_t desiredSampleCount = props.getSize("sampleCount", 4);
         size_t i = 1;
         while (i * i < desiredSampleCount)
@@ -48,7 +50,6 @@ public:
 #endif
 
 #ifndef RANDOM_NEXT_SAMPLE
-        /* Dimension, up to which which stratified samples are guaranteed to be available. */
         m_maxDimension = props.getInteger("dimension", 4);
 
         m_samples1D = new Float*[m_maxDimension];
@@ -61,8 +62,7 @@ public:
 #endif
 
         // radius
-        m_radius = 1./m_resolution;
-        m_radius *= 1.5; // trick
+        m_radius = 1./(Float)m_resolution;
         m_random = new Random();
     }
 
@@ -131,115 +131,112 @@ public:
         return sampler.get();
     }
 
+    void generate1D(Float* sampleArrays, size_t sampleCount, Float *radius) {
+            // generate a random points
+            sampleArrays[0] = m_random->nextFloat();
+
+            Float sample;
+            bool dist_ok;
+            unsigned tries;
+            //Float radius = 1./sqrt(sampleCount);
+
+            // generate all others
+            for (size_t i = 1; i < sampleCount; ++i) {
+                tries = 0;
+                do {
+                    // generate random point
+                    sample = m_random->nextFloat();
+                    dist_ok = true;
+                    for (size_t n = 0; n < i; ++n) {
+                        //check distance on all previous points
+                        if( minkowskiDistance1D(sample, sampleArrays[n]) < *radius ) {
+                            dist_ok = false;
+                            ++tries;
+                            break;
+                        }
+                    }
+
+                    // if too much trying, we narrow the circle around samples
+                    if( tries >= TRY_LIMIT ) {
+                        *radius *= FACTOR;
+                        tries = 0;
+                    }
+                } while ( !dist_ok );
+
+                // add sample to the list
+                sampleArrays[i] = sample;
+            }
+    }
+
+    void generate2D(Point2* sampleArrays, size_t sampleCount, Float *radius) {
+            // generate a random points
+            sampleArrays[0] = Point2(
+                m_random->nextFloat(),
+                m_random->nextFloat()
+            );
+
+            Point2 sample;
+            bool dist_ok;
+            unsigned tries;
+            //Float radius = 1./sqrt(sampleCount);
+
+            // generate all others
+            for (size_t i = 1; i < sampleCount; ++i) {
+                tries = 0;
+                do {
+                    // generate random point
+                    sample = Point2(
+                        m_random->nextFloat(),
+                        m_random->nextFloat()
+                    );
+                    dist_ok = true;
+                    for (size_t n = 0; n < i; ++n) {
+                        //check distance on all previous points
+                        if( minkowskiDistance2D(sample, sampleArrays[n]) < *radius ) {
+                            dist_ok = false;
+                            ++tries;
+                            break;
+                        }
+                    }
+
+                    // if too much trying, we narrow the circle around samples
+                    if( tries >= TRY_LIMIT ) {
+                        *radius *= FACTOR;
+                        //Log(EWarn, "Raduis to large ! New radius : %f", radius);
+                        tries = 0;
+                    }
+                } while ( !dist_ok );
+
+                // add sample to the list
+                sampleArrays[i] = sample;
+            }
+    }
+
     void generate(const Point2i &) {
 #ifndef RANDOM_NEXT_SAMPLE
+        /*
+         * It could be useful to keep the same radius if is change the first time
+         * it will probabily changed a second time (because the same num of samples).
+         * In practice that considerably improve the performances.
+         */
+        Float radius1D = 1./sqrt(m_sampleCount);
+        Float radius2D = 1./sqrt(m_sampleCount);
         for (size_t i = 0; i < m_maxDimension; i++) {
-            // generate random points
-            m_samples1D[i][0] = m_random->nextFloat();
-            m_samples2D[i][0] = Point2(
-                        m_random->nextFloat(),
-                        m_random->nextFloat());
-
-            //generate all others
-            for (size_t j = 1; j < m_sampleCount; ++j) {
-                Float pt;
-                Point2 pt2;
-                bool dist_ok;
-
-                // 1D generation
-                do {
-                    //generate random point
-                    pt = m_random->nextFloat();
-                    dist_ok = true;
-                    for (size_t n = 0; n < j; ++n) {
-                        //check distance on all previous points
-                        if( minkowskiDistance1D(pt, m_samples1D[i][n]) < m_radius ) {
-                            dist_ok = false;
-                            break;
-                        }
-                    }
-                } while ( !dist_ok );
-
-                // add sample to the list
-                m_samples1D[i][j] = pt;
-
-                // 2D generation
-                do {
-                    //generate random point
-                    pt2 = Point2(
-                            m_random->nextFloat(),
-                            m_random->nextFloat());
-                    dist_ok = true;
-                    for (size_t n = 0; n < j; ++n) {
-                        //check distance on all previous points
-                        if( minkowskiDistance2D(pt2, m_samples2D[i][n]) < m_radius ) {
-                            dist_ok = false;
-                            break;
-                        }
-                    }
-                } while ( !dist_ok );
-
-                // add sample to the list
-                m_samples2D[i][j] = pt2;
-            }
+            generate1D(m_samples1D[i], m_sampleCount, &radius1D);
+            generate2D(m_samples2D[i], m_sampleCount, &radius2D);
         }
 
         m_dimension1D = m_dimension2D = 0;
 #endif
+
         for (size_t i = 0; i < m_req1D.size(); i++) {
-            // generate a random point
-            m_sampleArrays1D[i][0] = m_random->nextFloat();
-
-            //generate all others
-            for (size_t j = 1; j < m_sampleCount * m_req1D[i]; ++j) {
-                Float pt;
-                bool dist_ok;
-                do {
-                    //generate random point
-                    pt = m_random->nextFloat();
-                    dist_ok = true;
-                    for (size_t n = 0; n < j; ++n) {
-                        //check distance on all previous points
-                        if( minkowskiDistance1D(pt, m_sampleArrays1D[i][n]) < m_radius ) {
-                            dist_ok = false;
-                            break;
-                        }
-                    }
-                } while ( !dist_ok );
-
-                // add sampler to the list
-                m_sampleArrays1D[i][j] = pt;
-            }
+            Float radius1D = 1./sqrt(m_sampleCount*m_req1D[i]);
+            generate1D(m_sampleArrays1D[i], m_sampleCount*m_req1D[i], &radius1D);
         }
 
         for (size_t i = 0; i < m_req2D.size(); i++) {
-            // generate a random point
-            m_sampleArrays2D[i][0] = Point2(
-                m_random->nextFloat(),
-                m_random->nextFloat());
-
-            //generate all others
-            for (size_t j = 1; j < m_sampleCount * m_req2D[i]; ++j) {
-                Point2 pt;
-                bool dist_ok;
-                do {
-                    //generate random point
-                    pt = Point2(
-                        m_random->nextFloat(),
-                        m_random->nextFloat());
-                    dist_ok = true;
-                    for (size_t n = 0; n < j; ++n) {
-                        //check distance on all previous points
-                        if( minkowskiDistance2D(pt, m_sampleArrays2D[i][n]) < m_radius ) {
-                            dist_ok = false;
-                            break;
-                        }
-                    }
-                } while ( !dist_ok );
-
-                // add sampler to the list
-                m_sampleArrays2D[i][j] = pt;
-            }
+            Float radius2D = 1./sqrt(m_sampleCount*m_req2D[i]);
+            generate2D(m_sampleArrays2D[i], m_sampleCount*m_req2D[i], &radius2D);
         }
 
         m_sampleIndex = 0;
@@ -248,12 +245,7 @@ public:
 
     /// Advance to the next sample
     inline void advance() {
-        m_sampleIndex++;
-        m_dimension1DArray = m_dimension2DArray = 0;
-
-#ifndef RANDOM_NEXT_SAMPLE
-        m_dimension1D = m_dimension2D = 0;
-#endif
+        setSampleIndex(m_sampleIndex + 1);
     }
 
     /// Manually set the current sample index
