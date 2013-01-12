@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'rendersettingsdlg.ui'
 **
-** Created: Mon Dec 31 11:30:43 2012
+** Created: Sat Jan 12 11:30:11 2013
 **      by: Qt User Interface Compiler version 4.8.4
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!

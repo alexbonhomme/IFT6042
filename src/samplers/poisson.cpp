@@ -67,16 +67,12 @@ public:
         }
 
         m_random = new Random();
-        //Log(EInfo, "QuadTree building...");
-        //m_quadtree = new QuadTree(AABB(Point2(0.,0.), 1.));
-        //Log(EInfo, "QuadTree created.");
     }
 
     PoissonDiscSampler(Stream *stream, InstanceManager *manager) : Sampler(stream, manager) {
         m_maxDimension = stream->readInt();
         m_resolution = stream->readInt();
         m_random = static_cast<Random *>(manager->getInstance(stream));
-        //m_quadtree = new QuadTree(AABB(Point2(0.,0.), 1.));
 
         m_samples1D = new Float*[m_maxDimension];
         m_samples2D = new Point2*[m_maxDimension];
@@ -91,7 +87,6 @@ public:
         stream->writeInt(m_maxDimension);
         stream->writeInt(m_resolution);
         manager->serialize(stream, m_random.get());
-        //TODO tree?
     }
 
     virtual ~PoissonDiscSampler() {
@@ -101,7 +96,6 @@ public:
         }
         delete[] m_samples1D;
         delete[] m_samples2D;
-        //delete m_quadtree;
     }
 
     ref<Sampler> clone() {
@@ -109,7 +103,6 @@ public:
         sampler->m_sampleCount = m_sampleCount;
         sampler->m_resolution = m_resolution;
         sampler->m_random = new Random(m_random);
-        //sampler->m_quadtree = new QuadTree(m_quadtree);
 
         //! Usefull ?
         for (size_t i = 0; i < m_req1D.size(); ++i)
@@ -130,11 +123,13 @@ public:
         return sampler.get();
     }
 
-    void generate1D(Float* samplesArray, size_t sampleCount) {
+    //TODO binarie tree
+    void generate1D(Float* samplesArray, size_t sampleCount, Float radius) {
         Float sample;
         bool dist_ok;
         unsigned tries;
-        Float radius = 1./sqrt(sampleCount);
+        //Float radius = 1./sqrt(sampleCount);
+        //Log(EWarn, "Radius 1D: %f", radius);
 
         // generate a random points
         samplesArray[0] = m_random->nextFloat();
@@ -169,22 +164,18 @@ public:
         }
     }
 
-    void generate2D(Point2* samplesArray, size_t sampleCount) {
+    void generate2D(Point2* samplesArray, size_t sampleCount, Float radius) {
         Point2 sample;
         bool dist_ok;
         unsigned tries;
-        Float radius = 1./sqrt(sampleCount);
-
-        //Log(EInfo, "QuadTree building...");
-        QuadTree samplesTree(AABB(Point2(0.,0.), 1.));
-        //Log(EInfo, "QuadTree created.");
+        //Float radius = 1./sqrt(sampleCount);
+        QuadTree samplesTree(AABB(0., 0., 1.));
+        //Log(EWarn, "Radius 2D: %f", radius);
 
         // generate a random points
-        samplesArray[0][0] = m_random->nextFloat();
-        samplesArray[0][1] = m_random->nextFloat();
-        //Log(EInfo, "Generate first point. QuadTree state: %d", m_quadtree == NULL);
-        //samplesTree.insert(samplesArray[0]);
-        //Log(EInfo, "Insert the first sample of this sequence in the tree.");
+        samplesArray[0] = Point2(m_random->nextFloat(),
+                                 m_random->nextFloat());
+        samplesTree.insert(samplesArray[0]);
 
         // generate all others
         for (size_t i = 1; i < sampleCount; ++i) {
@@ -194,7 +185,7 @@ public:
                 if( tries >= TRY_LIMIT ) {
                     radius *= FACTOR;
                     tries = 0;
-                    Log(EWarn, "Radius to large ! New radius : %f", radius);
+                    //Log(EWarn, "Radius to large ! New radius : %f", radius);
                 } else {
                     // generate a new random point
                     sample.x = m_random->nextFloat();
@@ -202,38 +193,35 @@ public:
                 }
 
                 dist_ok = true;
-                /*if( samplesTree.bNNSearch(sample, radius) ) {
+                if( samplesTree.bNNSearch(sample, radius) ) {
                     dist_ok = false;
                     ++tries;
-                }*/
+                }
             } while ( !dist_ok );
 
             // add sample to the list
-            samplesArray[i] = sample;
+            samplesArray[i] = Point2(sample.x, sample.y);
             // ...and to the tree
-            samplesTree.insert(sample);
+            samplesTree.insert(samplesArray[i]);
         }
-
-        // We clean the tree
-        //m_quadtree->clean();
-        //Log(EInfo, "QuadTree clean !");
-        //delete samplesTree;
     }
 
     /// Generate all samples
     void generate(const Point2i &) {
+        Float radius1D = 1./(Float)m_sampleCount;
+        Float radius2D = 1./sqrt((Float)m_sampleCount);
         for (size_t i = 0; i < m_maxDimension; i++) {
-            generate1D(m_samples1D[i], m_sampleCount);
-            generate2D(m_samples2D[i], m_sampleCount);
+            generate1D(m_samples1D[i], m_sampleCount, radius1D);
+            generate2D(m_samples2D[i], m_sampleCount, radius2D);
         }
 
         m_dimension1D = m_dimension2D = 0;
 
         for (size_t i = 0; i < m_req1D.size(); i++)
-            generate1D(m_sampleArrays1D[i], m_sampleCount*m_req1D[i]);
+            generate1D(m_sampleArrays1D[i], m_sampleCount*m_req1D[i], 1./(Float)(m_sampleCount*m_req1D[i]));
 
         for (size_t i = 0; i < m_req2D.size(); i++)
-            generate2D(m_sampleArrays2D[i], m_sampleCount*m_req2D[i]);
+            generate2D(m_sampleArrays2D[i], m_sampleCount*m_req2D[i], 1./sqrt((Float)m_sampleCount*m_req2D[i]));
 
         m_sampleIndex = 0;
         m_dimension1DArray = m_dimension2DArray = 0;
@@ -251,7 +239,6 @@ public:
         m_dimension1D = m_dimension2D = 0;
     }
 
-    //! Not sure about it...
     inline Float next1D() {
         Assert(m_sampleIndex < m_sampleCount);
         if (m_dimension1D < m_maxDimension) {
@@ -289,7 +276,6 @@ private:
     Float** m_samples1D;
     Point2** m_samples2D;
     size_t m_dimension1D, m_dimension2D;
-    //QuadTree* m_quadtree;
 };
 
 MTS_IMPLEMENT_CLASS_S(PoissonDiscSampler, false, Sampler)

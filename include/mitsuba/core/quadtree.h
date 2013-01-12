@@ -21,26 +21,31 @@ inline Float minkowskiDistance2D(const Point2 &a, const Point2 &b) {
 struct AABB {
 public:
     AABB() :
-        center(0., 0.),
+        x(0.), y(0.),
         halfSize(0.) {}
 
-    AABB(const Point2 &center, Float halfSize) :
-        center(center.x, center.y),
+    AABB(Float x, Float y, Float halfSize) :
+        x(x), y(y),
         halfSize(halfSize) {}
-
+/*
+    AABB(const Point2 &center, Float halfSize) :
+        x(center.x), y(center.y),
+        halfSize(halfSize) {}
+*/
     AABB(const AABB &aabb) {
-        center.x = aabb.center.x;
-        center.y = aabb.center.y;
+        x = aabb.x;
+        y = aabb.y;
         halfSize = aabb.halfSize;
     }
 
+    ~AABB() {}
+
     inline bool isIn(const Point2 &p) {
-        SLog(EInfo, "isIn()");
-        return p.x > center.x - halfSize && p.x <= center.x + halfSize &&
-               p.y > center.y - halfSize && p.y <= center.y + halfSize;
+        return p.x > x - halfSize && p.x <= x + halfSize &&
+               p.y > y - halfSize && p.y <= y + halfSize;
     }
 
-    Point2 center;
+    Float x, y;
     Float halfSize;
 };
 
@@ -57,7 +62,7 @@ public:
     QuadNode(AABB aabb, NodeType type=ELeaf, int level=-1) :
         m_northWest(NULL), m_northEast(NULL),
         m_southWest(NULL), m_southEast(NULL),
-        m_point(0., 0.), m_aabb(Point2(aabb.center.x, aabb.center.y), aabb.halfSize),
+        m_point(0., 0.), m_aabb(aabb.x, aabb.y, aabb.halfSize),
         m_state(EEmpty), m_type(type), m_level(level)
     {}
 
@@ -95,6 +100,7 @@ public:
      * @param p
      */
     bool insert(const Point2 &p) {
+#if 0
         if(m_type == ELeaf &&  m_aabb.isIn(p)) { // the point is in leaf
             if(m_state == EEmpty) {
                 m_state = EFull;
@@ -119,6 +125,35 @@ public:
         } else {
             return false;
         }
+#endif
+        
+        if(m_aabb.isIn(p)) { // the point is in leaf
+            if(m_type == ELeaf && m_state == EEmpty) { // empty leaf, no problem
+                m_state = EFull;
+                m_point.x = p.x;
+                m_point.y = p.y;
+
+                return true;
+            } else { // node or full leaf
+                if(m_type == ELeaf) {
+                    if(m_point != p) { // for just return an error
+                        split(); // split this leaf
+                    } /*else {
+                        SLog(EWarn, "This point is already exists !");
+                    }*/
+                }
+
+                // recursive insertion
+                if (m_northWest->insert(p)) return true;
+                if (m_northEast->insert(p)) return true;
+                if (m_southWest->insert(p)) return true;
+                if (m_southEast->insert(p)) return true;
+
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -132,35 +167,35 @@ public:
 
             // allocate new leaf
             Float halfSize = m_aabb.halfSize/2.;
-            m_northWest = new QuadNode(AABB(Point2(m_aabb.center.x - halfSize,
-                                                   m_aabb.center.y - halfSize),
+            m_northWest = new QuadNode(AABB(m_aabb.x - halfSize,
+                                            m_aabb.y - halfSize,
                                             halfSize));
             m_northWest->setLevel(m_level+1);
 
-            m_northEast = new QuadNode(AABB(Point2(m_aabb.center.x + halfSize,
-                                                   m_aabb.center.y - halfSize),
+            m_northEast = new QuadNode(AABB(m_aabb.x + halfSize,
+                                            m_aabb.y - halfSize,
                                             halfSize));
             m_northEast->setLevel(m_level+1);
 
-            m_southWest = new QuadNode(AABB(Point2(m_aabb.center.x - halfSize,
-                                                   m_aabb.center.y + halfSize),
+            m_southWest = new QuadNode(AABB(m_aabb.x - halfSize,
+                                            m_aabb.y + halfSize,
                                             halfSize));
             m_southWest->setLevel(m_level+1);
 
-            m_southEast = new QuadNode(AABB(Point2(m_aabb.center.x + halfSize,
-                                                   m_aabb.center.y + halfSize),
+            m_southEast = new QuadNode(AABB(m_aabb.x + halfSize,
+                                            m_aabb.y + halfSize,
                                             halfSize));
             m_southEast->setLevel(m_level+1);
 
             // move the point in the corresponding leaf
-            if (m_point.x > m_aabb.center.x) {
-                if (m_point.y > m_aabb.center.y) {
+            if (m_point.x > m_aabb.x) {
+                if (m_point.y > m_aabb.y) {
                     m_southEast->insert(m_point);
                 } else {
                     m_northEast->insert(m_point);
                 }
             } else {
-                if (m_point.y > m_aabb.center.y) {
+                if (m_point.y > m_aabb.y) {
                     m_southWest->insert(m_point);
                 } else {
                     m_northWest->insert(m_point);
@@ -199,7 +234,7 @@ public:
      * @return
      */
     inline AABB getAABB() const {
-        return AABB(Point2(m_aabb.center.x, m_aabb.center.y), m_aabb.halfSize);
+        return AABB(m_aabb.x, m_aabb.y, m_aabb.halfSize);
     }
 
     /**
@@ -216,8 +251,8 @@ public:
                 return minkowskiDistance2D(m_point, p) < radius;
         } else {
             // distance from V & H plans
-            Float distToVPlane = m_aabb.center.x - p.x;
-            Float distToHPlane = m_aabb.center.y - p.y;
+            Float distToVPlane = m_aabb.x - p.x;
+            Float distToHPlane = m_aabb.y - p.y;
 
             // check if search cercle is over many cells
             bool searchVBoth = fabs(distToVPlane) <= radius;
@@ -396,12 +431,12 @@ public:
                 AABB aabb((*vectAABB)[n]);
 
                 // left top
-                int xMin = (int)((aabb.center.x - aabb.halfSize)*(size/2-1) + (size/2));
-                int yMin = (int)((aabb.center.y - aabb.halfSize)*(size/2-1) + (size/2));
+                int xMin = (int)((aabb.x - aabb.halfSize)*(size/2-1) + (size/2));
+                int yMin = (int)((aabb.y - aabb.halfSize)*(size/2-1) + (size/2));
 
                 // right bottom
-                int xMax = (int)((aabb.center.x + aabb.halfSize)*(size/2-1) + (size/2));
-                int yMax = (int)((aabb.center.y + aabb.halfSize)*(size/2-1) + (size/2));
+                int xMax = (int)((aabb.x + aabb.halfSize)*(size/2-1) + (size/2));
+                int yMax = (int)((aabb.y + aabb.halfSize)*(size/2-1) + (size/2));
 
                 int fullSize = xMax - xMin;
                 int halfSize = fullSize/2;

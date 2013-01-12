@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'programsettingsdlg.ui'
 **
-** Created: Mon Dec 31 11:30:05 2012
+** Created: Sat Jan 12 11:29:27 2013
 **      by: Qt User Interface Compiler version 4.8.4
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
