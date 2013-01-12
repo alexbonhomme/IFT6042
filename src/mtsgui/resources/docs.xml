@@ -999,7 +999,7 @@
 	
 	<plugin type="sampler" name="poisson" readableName="Poisson Disc sampler" show="true" className="PoissonDiscSampler" extends="Sampler">
 		<descr>
-			<p>Basic Poisson Disc sampler. (low speed)</p>
+			<p>Basic Poisson Disc sampler. (slow implementation)</p>
 		</descr>
 		<param name="sampleCount" readableName="Samples per pixel" type="integer" default="4">Number of samples per pixel</param>
 	</plugin>

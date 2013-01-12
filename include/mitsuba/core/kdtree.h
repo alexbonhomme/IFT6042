@@ -67,7 +67,7 @@ template <typename _PointType, typename _DataRecord> struct SimpleKDNode {
 		right(0), data(data), flags(0) { }
 
 	/// Given the current node's index, return the index of the right child
-		inline IndexType getRightIndex(IndexType self) const { return right; }
+	inline IndexType getRightIndex(IndexType self) const { return right; }
 	/// Given the current node's index, set the right child index
 	inline void setRightIndex(IndexType self, IndexType value) { right = value; }
 
