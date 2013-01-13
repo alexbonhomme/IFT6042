@@ -1,7 +1,7 @@
 * Génération poisson disc
     - 256 samples
-        - classique : 0.04s
-        - quadtree : 0.01s
+        - classique : 3.45ms
+        - quadtree : 0.47ms
         
     - 2048 samples
         - classique : 1.56s
@@ -55,6 +55,10 @@
             
             - Independent:
                 Render time: 12.6286m
+
+        - 2048 Samples & Resolution 512x512: (on prendra cette image comme référence)
+            - Low discrepancy:
+                Render time: 1.7356h
 - Veach_bidir:
     - Bidirectional path tracer:
         - 64 Samples & Resolution 768x576:
@@ -62,6 +66,17 @@
                 Render time: 35.4430m
             
             - Stratified:
-                
+                Render time: 29.7685m
             
             - Independent:
+                Render time: 29.5334m
+                
+        - 128 Samples & Resolution 768x576:
+            - Poisson:
+                Render time: 1.2137h 
+            
+            - Stratified:
+                Render time: 
+            
+            - Independent:
+                Render time: 

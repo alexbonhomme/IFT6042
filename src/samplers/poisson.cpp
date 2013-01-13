@@ -161,8 +161,22 @@ public:
                         break;
                     }
                 }*/
-                // get the two closest points
+                // get the two closest points (before & after)
+                bounds = samplesSet.equal_range(sample);
 
+                // the first iterator need to be decremented to be the real previous point (cf. equal_range implementation)
+                // and after, we're just check the distance
+                if(bounds.first-- != samplesSet.begin() && bounds.first != samplesSet.begin() &&
+                        fabs(sample - *bounds.first) < radius) {
+                    dist_ok = false;
+                    ++tries;
+                }
+                // if distance is correct left we check right
+                if(dist_ok && bounds.second != samplesSet.end() &&
+                        fabs(sample - *bounds.second) < radius) {
+                    dist_ok = false;
+                    ++tries;
+                }
 
             } while ( !dist_ok );
 
