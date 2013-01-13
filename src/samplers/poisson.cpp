@@ -18,6 +18,7 @@
 
 #include <mitsuba/render/sampler.h>
 #include <mitsuba/core/quadtree.h>
+#include <set>
 
 MTS_NAMESPACE_BEGIN
 
@@ -130,9 +131,12 @@ public:
         unsigned tries;
         //Float radius = 1./sqrt(sampleCount);
         //Log(EWarn, "Radius 1D: %f", radius);
+        std::set<Float> samplesSet;
+        std::pair< std::set<Float>::const_iterator, std::set<Float>::const_iterator > bounds;
 
         // generate a random points
         samplesArray[0] = m_random->nextFloat();
+        samplesSet.insert(samplesArray[0]);
 
         // generate all others
         for (size_t i = 1; i < sampleCount; ++i) {
@@ -148,6 +152,7 @@ public:
                 }
 
                 dist_ok = true;
+                /*
                 for (size_t n = 0; n < i; ++n) { //!TODO Random search ?
                     //check distance on all previous points
                     if( minkowskiDistance1D(sample, samplesArray[n]) < radius ) {
@@ -155,12 +160,15 @@ public:
                         ++tries;
                         break;
                     }
-                }
+                }*/
+                // get the two closest points
+
 
             } while ( !dist_ok );
 
             // add sample to the list
             samplesArray[i] = sample;
+            samplesSet.insert(samplesArray[i]);
         }
     }
 

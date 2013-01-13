@@ -1,0 +1,67 @@
+* Génération poisson disc
+    - 256 samples
+        - classique : 0.04s
+        - quadtree : 0.01s
+        
+    - 2048 samples
+        - classique : 1.56s
+        - quadtree : 0.02s
+    
+    - 4096 samples
+        - classique : 7.7s
+        - quadtree : 0.06s
+    
+    - 8192 samples
+        - classique : 22.61s
+        - quadtree : 0.12s
+
+* Comparaisons sur différentes scènes
+- Cbox:
+    - Path tracer:
+        - 64 Samples & Resolution 512x512:
+            - Poisson:
+                - implémentation brutal (basique)
+                    Render time: 11.6605m
+                - implémentation brutal (on conserve le rayon une fois changé)
+                    Render time: 7.5040m -> resultats semblent biaisés...
+                
+                - implémentation par QuadTree (r: 1/sqrt(nSamples))
+                    Render time: 6.6960m
+
+            - Stratified:
+                Render time: 3.4818m
+            
+            - Independent:
+                Render time: 3.2303m
+        
+        - 128 Samples & Resolution 512x512:
+            - Poisson:
+                - implémentation par QuadTree (r: 1/sqrt(nSamples))
+                    Render time: 14.8698m
+
+            - Stratified:
+                Render time: 7.5794m
+            
+            - Independent:
+                Render time: 7.2160m
+        
+        - 256 Samples & Resolution 512x512:
+            - Poisson:
+                - implémentation par QuadTree (r: 1/sqrt(nSamples))
+                    Render time: 34.2941m
+
+            - Stratified:
+                Render time: 13.1823m
+            
+            - Independent:
+                Render time: 12.6286m
+- Veach_bidir:
+    - Bidirectional path tracer:
+        - 64 Samples & Resolution 768x576:
+            - Poisson:
+                Render time: 35.4430m
+            
+            - Stratified:
+                
+            
+            - Independent:
