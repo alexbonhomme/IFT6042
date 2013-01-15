@@ -27,11 +27,7 @@ public:
     AABB(Float x, Float y, Float halfSize) :
         x(x), y(y),
         halfSize(halfSize) {}
-/*
-    AABB(const Point2 &center, Float halfSize) :
-        x(center.x), y(center.y),
-        halfSize(halfSize) {}
-*/
+
     AABB(const AABB &aabb) {
         x = aabb.x;
         y = aabb.y;
@@ -96,37 +92,10 @@ public:
     inline bool isInAABB(const Point2 &p) { return m_aabb.isIn(p); }
 
     /**
-     * @brief insert
+     * @brief Insert a point
      * @param p
      */
-    bool insert(const Point2 &p) {
-#if 0
-        if(m_type == ELeaf &&  m_aabb.isIn(p)) { // the point is in leaf
-            if(m_state == EEmpty) {
-                m_state = EFull;
-                m_point.x = p.x;
-                m_point.y = p.y;
-
-                return true;
-            } else {
-                if(m_point != p) { // for just return an error
-                    split(); // split this node
-
-                    if (m_northWest->insert(p)) return true;
-                    if (m_northEast->insert(p)) return true;
-                    if (m_southWest->insert(p)) return true;
-                    if (m_southEast->insert(p)) return true;
-                }/* else {
-                    SLog(EWarn, "This point is already exists !");
-                }*/
-
-                return false;
-            }
-        } else {
-            return false;
-        }
-#endif
-        
+    bool insert(const Point2 &p) {   
         if(m_aabb.isIn(p)) { // the point is in leaf
             if(m_type == ELeaf && m_state == EEmpty) { // empty leaf, no problem
                 m_state = EFull;
@@ -157,7 +126,7 @@ public:
     }
 
     /**
-     * @brief split
+     * @brief Subdivise a node into 4 empty leafs
      */
     void split() {
         if (m_type == ELeaf) {
@@ -170,22 +139,22 @@ public:
             m_northWest = new QuadNode(AABB(m_aabb.x - halfSize,
                                             m_aabb.y - halfSize,
                                             halfSize));
-            m_northWest->setLevel(m_level+1);
+            //m_northWest->setLevel(m_level+1);
 
             m_northEast = new QuadNode(AABB(m_aabb.x + halfSize,
                                             m_aabb.y - halfSize,
                                             halfSize));
-            m_northEast->setLevel(m_level+1);
+            //m_northEast->setLevel(m_level+1);
 
             m_southWest = new QuadNode(AABB(m_aabb.x - halfSize,
                                             m_aabb.y + halfSize,
                                             halfSize));
-            m_southWest->setLevel(m_level+1);
+            //m_southWest->setLevel(m_level+1);
 
             m_southEast = new QuadNode(AABB(m_aabb.x + halfSize,
                                             m_aabb.y + halfSize,
                                             halfSize));
-            m_southEast->setLevel(m_level+1);
+            //m_southEast->setLevel(m_level+1);
 
             // move the point in the corresponding leaf
             if (m_point.x > m_aabb.x) {
@@ -388,7 +357,7 @@ public:
     }
 
     /**
-     * @brief insert
+     * @brief Insert a new point in the tree
      * @param p
      */
     inline bool insert(const Point2 &p) {
@@ -396,7 +365,7 @@ public:
     }
 
     /**
-     * @brief bNNSearch
+     * @brief Search point p in a radius r
      * @param p
      * @param radius
      * @return
@@ -406,7 +375,7 @@ public:
     }
 
     /**
-     * @brief printImg
+     * @brief Save a representation of Quadtree in a file .ppm
      * @param size
      * @param filename
      */
@@ -426,7 +395,6 @@ public:
         }
 
         if(grid) {
-            //std::cout << ">> " << vectAABB->size() << " nodes.\n";
             for (unsigned n = 0; n < vectAABB->size(); ++n) {
                 AABB aabb((*vectAABB)[n]);
 
@@ -456,7 +424,6 @@ public:
 
         std::vector<Point2>* vectPoint = new std::vector<Point2>;
         m_root->leafToVect(vectPoint);
-        //std::cout << ">> " << vectPoint->size() << " leafs.\n";
         for (unsigned n = 0; n < vectPoint->size(); ++n) {
             Point2 point = (*vectPoint)[n];
 

@@ -40,22 +40,8 @@ public:
      * @param props
      */
     PoissonDiscSampler(const Properties &props) : Sampler(props) {
-#if 0
-        size_t desiredSampleCount = props.getSize("sampleCount", 4);
-        size_t i = 1;
-        while (i * i < desiredSampleCount)
-            ++i;
-        m_sampleCount = i*i;
-
-        if (m_sampleCount != desiredSampleCount) {
-            Log(EWarn, "Sample count should be a perfect square -- rounding to " SIZE_T_FMT, m_sampleCount);
-        }
-
-        m_resolution = (int) i;
-#else
         m_sampleCount = props.getSize("sampleCount", 4);
         m_resolution = (int) sqrt(m_sampleCount);
-#endif
 
         m_maxDimension = props.getInteger("dimension", 4);
 
@@ -129,8 +115,6 @@ public:
         Float sample;
         bool dist_ok;
         unsigned tries;
-        //Float radius = 1./sqrt(sampleCount);
-        //Log(EWarn, "Radius 1D: %f", radius);
         std::set<Float> samplesSet;
         std::pair< std::set<Float>::const_iterator, std::set<Float>::const_iterator > bounds;
 
@@ -151,21 +135,12 @@ public:
                     sample = m_random->nextFloat();
                 }
 
-                dist_ok = true;
-                /*
-                for (size_t n = 0; n < i; ++n) { //!TODO Random search ?
-                    //check distance on all previous points
-                    if( minkowskiDistance1D(sample, samplesArray[n]) < radius ) {
-                        dist_ok = false;
-                        ++tries;
-                        break;
-                    }
-                }*/
                 // get the two closest points (before & after)
                 bounds = samplesSet.equal_range(sample);
 
                 // the first iterator need to be decremented to be the real previous point (cf. equal_range implementation)
                 // and after, we're just check the distance
+                dist_ok = true;
                 if(bounds.first-- != samplesSet.begin() && bounds.first != samplesSet.begin() &&
                         fabs(sample - *bounds.first) < radius) {
                     dist_ok = false;
@@ -190,9 +165,7 @@ public:
         Point2 sample;
         bool dist_ok;
         unsigned tries;
-        //Float radius = 1./sqrt(sampleCount);
         QuadTree samplesTree(AABB(0., 0., 1.));
-        //Log(EWarn, "Radius 2D: %f", radius);
 
         // generate a random points
         samplesArray[0] = Point2(m_random->nextFloat(),
@@ -282,10 +255,12 @@ public:
         }
     }
 
-    std::string toString() const {
+    inline std::string toString() const {
         std::ostringstream oss;
         oss << "PoissonDiscSampler[" << endl
             << "  sampleCount = " << m_sampleCount << endl
+            << "  dimension = " << m_maxDimension << "," << endl
+            << "  sampleIndex = " << m_sampleIndex << "," << endl
             << "]";
         return oss.str();
     }
