@@ -136,7 +136,7 @@
                 
         - 256 Samples & Resolution 768x576:
             - Independent:
-                
+                Render time: 21.9675m
             
             - Stratified:
                 Render time: 22.6097m
@@ -162,7 +162,7 @@
                 
         - 2048 Samples & Resolution 768x576: (on prendra cette image comme référence)
             - Independent:
-                
+                Render time: 2.3880h
 
 - mi:
     - Direct illumination:
@@ -249,10 +249,10 @@
                 Render time: 15.0460m
             
             - Stratified:
-                
+                Render time: 16.4749m
             
             - Poisson:
-                
+                Render time: 26.2344m
                 
         
         - 2048 Samples & Resolution 1024x768: (on prendra cette image comme référence)
